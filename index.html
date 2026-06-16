@@ -3,79 +3,127 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Moncton Rooftop Unit Detection</title>
+  <title>Rooftop Unit Detection — Moncton, NB</title>
 
-  <!-- ArcGIS Maps SDK for JavaScript (pinned) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <!-- Map -->
-  <div id="viewDiv"></div>
+  <div id="app">
+    <!-- ===================== Sidebar ===================== -->
+    <aside id="sidebar">
+      <header id="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="38" height="38" role="img">
+            <defs>
+              <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#FBEBC8"/>
+                <stop offset="0.5" stop-color="#F7CD8C"/>
+                <stop offset="1" stop-color="#F2A36B"/>
+              </linearGradient>
+            </defs>
+            <rect width="40" height="40" fill="url(#sky)"/>
+            <circle cx="20" cy="20" r="7" fill="#3C6E6E"/>
+            <path d="M0 40 L0 28 L7 22 L13 28 L20 21 L28 29 L34 25 L40 30 L40 40 Z" fill="#2C5050"/>
+            <path d="M0 40 L0 33 L5 33 L5 29 L9 29 L9 33 L14 33 L14 31 L18 31 L18 40 Z" fill="#3C6E6E"/>
+            <rect x="24" y="32" width="4" height="8" fill="#3C6E6E"/>
+            <rect x="30" y="30" width="4" height="10" fill="#2C5050"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-eyebrow">Licker Geospatial &times; ReCover</span>
+          <h1 class="brand-title">Rooftop Unit Detection</h1>
+          <p class="brand-sub">Moncton, New Brunswick &middot; 7.5&nbsp;cm imagery</p>
+        </div>
+      </header>
 
-  <!-- Title / brand (hidden in ?embed=1) -->
-  <header id="appHeader" class="panel chrome">
-    <div class="brand">
-      <!-- logo slot: drop an <img> here later -->
-      <div class="logo-slot" aria-hidden="true"></div>
-      <div class="titles">
-        <h1>Moncton Rooftop Unit Detection</h1>
-        <p class="subtitle">ReCover Initiative &middot; automated RTU detection from 7.5&nbsp;cm imagery</p>
+      <div class="sidebar-scroll">
+        <!-- Metrics -->
+        <section class="panel-section" id="metrics">
+          <h2 class="section-title">Model performance</h2>
+          <div class="stat-row">
+            <div class="stat stat-hero">
+              <span class="stat-value" id="m-recall">89.4<span class="unit">%</span></span>
+              <span class="stat-label">recall</span>
+            </div>
+            <div class="stat stat-hero">
+              <span class="stat-value" id="m-precision">89.7<span class="unit">%</span></span>
+              <span class="stat-label">precision</span>
+            </div>
+          </div>
+          <div class="chip-row">
+            <span class="chip"><b id="m-det">2,955</b> RTUs</span>
+            <span class="chip"><b id="m-bld">1,958</b> buildings</span>
+            <span class="chip"><b id="m-withrtu">677</b> with units</span>
+          </div>
+          <p class="section-note">
+            Validated on 508 labelled buildings (PASCAL&nbsp;VOC, IoU&nbsp;&ge;&nbsp;0.5):
+            <b>2,160</b> correct &middot; <b>248</b> false&nbsp;positives &middot; <b>255</b> missed.
+          </p>
+        </section>
+
+        <!-- Layers -->
+        <section class="panel-section" id="layers">
+          <h2 class="section-title">Layers</h2>
+          <div id="layerToggles"><!-- built in app.js --></div>
+          <div class="control" id="orthoControl" hidden>
+            <label class="control-label">Imagery opacity <span class="control-val" id="orthoOpacityVal">100%</span></label>
+            <div id="orthoOpacity"></div>
+          </div>
+        </section>
+
+        <!-- Confidence filter -->
+        <section class="panel-section" id="confidence">
+          <h2 class="section-title">Confidence filter</h2>
+          <label class="control-label">Show detections at or above <span class="control-val" id="confVal">85%</span></label>
+          <div id="confSlider"></div>
+          <p class="section-note" id="confCount">Showing all 2,955 detections.</p>
+        </section>
+
+        <!-- Custom legend -->
+        <section class="panel-section" id="legendSection">
+          <h2 class="section-title">Legend</h2>
+          <ul class="legend">
+            <li><span class="lg-swatch lg-rtu"></span><span class="lg-text">RTU detection <em>— click for confidence</em></span></li>
+            <li><span class="lg-swatch lg-bld"></span><span class="lg-text">Building footprint <em>— click for unit count</em></span></li>
+            <li class="lg-ortho" hidden><span class="lg-swatch lg-img"></span><span class="lg-text">Masked ortho (7.5&nbsp;cm)</span></li>
+          </ul>
+          <div class="legend-ramp">
+            <span class="ramp-title">Units per building</span>
+            <div class="ramp" id="countRamp"><!-- built in app.js --></div>
+          </div>
+        </section>
       </div>
-    </div>
-  </header>
 
-  <!-- Headline metrics -->
-  <section id="metricsPanel" class="panel" aria-label="Model performance">
-    <div class="metric metric-hero">
-      <span class="metric-value" id="m-detections">2,955</span>
-      <span class="metric-label">RTUs detected</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value" id="m-recall">89.4%</span>
-      <span class="metric-label">recall</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value" id="m-precision">89.7%</span>
-      <span class="metric-label">precision</span>
-    </div>
-    <div class="metric">
-      <span class="metric-value" id="m-buildings">1,958</span>
-      <span class="metric-label">buildings &middot; <span id="m-withrtu">677</span> with RTUs</span>
-    </div>
-    <p class="metrics-note chrome">
-      Validated against 2,415 hand-labelled RTUs on 508 buildings (IoU&nbsp;&ge;&nbsp;0.5):
-      2,160 correct, 248 false positives, 255 missed.
-    </p>
-  </section>
+      <footer id="brandFooter">
+        <svg class="wave" viewBox="0 0 340 26" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 16 Q57 4 113 13 T226 13 T340 11 V26 H0 Z" fill="#3C6E6E"/>
+          <path d="M0 19 Q57 9 113 17 T226 16 T340 15 V26 H0 Z" fill="#F2A36B"/>
+          <path d="M0 22 Q57 14 113 20 T226 20 T340 19 V26 H0 Z" fill="#F7CD8C"/>
+          <path d="M0 24 Q57 19 113 23 T226 22 T340 22 V26 H0 Z" fill="#FBEBC8"/>
+        </svg>
+      </footer>
 
-  <!-- Controls -->
-  <section id="controlsPanel" class="panel" aria-label="Controls">
-    <div class="control-block">
-      <label class="control-label" for="confSlider">
-        Minimum confidence: <strong id="confValue">85%</strong>
-      </label>
-      <div id="confSlider"></div>
-      <p class="control-hint">Drag to show only higher-confidence detections.</p>
-    </div>
+      <button id="sidebarToggle" title="Collapse panel" aria-label="Collapse panel">&#8249;</button>
+    </aside>
 
-    <div class="control-block" id="orthoBlock" hidden>
-      <label class="control-label" for="orthoOpacity">
-        Imagery opacity: <strong id="orthoOpacityValue">100%</strong>
-      </label>
-      <div id="orthoOpacity"></div>
-    </div>
-  </section>
+    <!-- ===================== Map ===================== -->
+    <main id="mapWrap">
+      <div id="viewDiv"></div>
+    </main>
+  </div>
 
-  <!-- Loading / status -->
   <div id="status" class="status" role="status">Loading dashboard&hellip;</div>
 
   <script>
-    // Surface a friendly message if the SDK CDN is unreachable (e.g. blocked conf. wifi)
     window.addEventListener("error", function (e) {
       if (e && e.target && e.target.tagName === "SCRIPT") {
         var s = document.getElementById("status");
-        if (s) { s.textContent = "Could not load the map library (network?)."; s.classList.add("error"); }
+        if (s) { s.textContent = "Could not load a required library (network?)."; s.classList.add("error"); }
       }
     }, true);
   </script>
