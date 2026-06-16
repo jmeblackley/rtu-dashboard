@@ -1,0 +1,93 @@
+:root {
+  --bg: #f4f5f7;
+  --panel-bg: rgba(255, 255, 255, 0.94);
+  --panel-border: rgba(20, 30, 45, 0.10);
+  --ink: #1c2733;
+  --ink-soft: #5a6573;
+  --accent: #0b6e8f;
+  --shadow: 0 2px 14px rgba(20, 30, 45, 0.14);
+  --radius: 12px;
+  --pad: 14px;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { font-family: var(--font); color: var(--ink); background: var(--bg); overflow: hidden; }
+
+#viewDiv { position: absolute; inset: 0; }
+
+/* Floating panels */
+.panel {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--pad);
+  backdrop-filter: blur(6px);
+  z-index: 5;
+}
+
+#appHeader { top: 14px; left: 14px; max-width: 360px; }
+.brand { display: flex; gap: 12px; align-items: center; }
+.logo-slot {
+  width: 40px; height: 40px; flex: 0 0 40px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), #0a4d63);
+}
+.titles h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.subtitle { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+/* Metrics */
+#metricsPanel {
+  top: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
+  max-width: min(680px, calc(100vw - 28px));
+}
+.metric { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+.metric-value { font-size: 20px; font-weight: 750; line-height: 1.05; color: var(--ink); }
+.metric-hero .metric-value { font-size: 26px; color: var(--accent); }
+.metric-label { font-size: 11px; color: var(--ink-soft); text-align: center; margin-top: 2px; }
+.metrics-note {
+  flex-basis: 100%; margin: 6px 0 0; font-size: 11px; color: var(--ink-soft);
+  border-top: 1px solid var(--panel-border); padding-top: 6px;
+}
+
+/* Controls */
+#controlsPanel { bottom: 24px; left: 14px; width: 280px; }
+.control-block + .control-block { margin-top: 14px; border-top: 1px solid var(--panel-border); padding-top: 12px; }
+.control-label { font-size: 13px; color: var(--ink); display: block; margin-bottom: 8px; }
+.control-hint { font-size: 11px; color: var(--ink-soft); margin: 8px 0 0; }
+
+/* Status toast */
+.status {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  background: rgba(28, 39, 51, 0.9); color: #fff; font-size: 13px;
+  padding: 8px 14px; border-radius: 999px; z-index: 6; box-shadow: var(--shadow);
+  transition: opacity 0.4s ease;
+}
+.status.hidden { opacity: 0; pointer-events: none; }
+.status.error { background: #9b2c2c; }
+
+/* Esri widget tweaks */
+.esri-popup__header-title { font-size: 14px; }
+.esri-slider { --calcite-ui-brand: var(--accent); }
+
+/* ---- Embed mode (?embed=1): strip chrome, keep map + data + legend ---- */
+body.embed .chrome { display: none !important; }
+body.embed #appHeader { display: none; }
+body.embed #metricsPanel {
+  top: auto; bottom: 14px; left: 14px; right: auto; transform: none;
+  flex-wrap: nowrap; gap: 12px; padding: 8px 12px;
+}
+body.embed #metricsPanel .metric-label { font-size: 10px; }
+body.embed #controlsPanel { bottom: 14px; right: 14px; left: auto; width: 230px; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  #appHeader { max-width: calc(100vw - 28px); }
+  #metricsPanel { gap: 12px; padding: 10px; }
+  .metric-hero .metric-value { font-size: 22px; }
+  #controlsPanel { width: calc(100vw - 28px); }
+}

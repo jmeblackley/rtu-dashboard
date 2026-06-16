@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Moncton Rooftop Unit Detection</title>
+
+  <!-- ArcGIS Maps SDK for JavaScript (pinned) -->
+  <link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Map -->
+  <div id="viewDiv"></div>
+
+  <!-- Title / brand (hidden in ?embed=1) -->
+  <header id="appHeader" class="panel chrome">
+    <div class="brand">
+      <!-- logo slot: drop an <img> here later -->
+      <div class="logo-slot" aria-hidden="true"></div>
+      <div class="titles">
+        <h1>Moncton Rooftop Unit Detection</h1>
+        <p class="subtitle">ReCover Initiative &middot; automated RTU detection from 7.5&nbsp;cm imagery</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Headline metrics -->
+  <section id="metricsPanel" class="panel" aria-label="Model performance">
+    <div class="metric metric-hero">
+      <span class="metric-value" id="m-detections">2,955</span>
+      <span class="metric-label">RTUs detected</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value" id="m-recall">89.4%</span>
+      <span class="metric-label">recall</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value" id="m-precision">89.7%</span>
+      <span class="metric-label">precision</span>
+    </div>
+    <div class="metric">
+      <span class="metric-value" id="m-buildings">1,958</span>
+      <span class="metric-label">buildings &middot; <span id="m-withrtu">677</span> with RTUs</span>
+    </div>
+    <p class="metrics-note chrome">
+      Validated against 2,415 hand-labelled RTUs on 508 buildings (IoU&nbsp;&ge;&nbsp;0.5):
+      2,160 correct, 248 false positives, 255 missed.
+    </p>
+  </section>
+
+  <!-- Controls -->
+  <section id="controlsPanel" class="panel" aria-label="Controls">
+    <div class="control-block">
+      <label class="control-label" for="confSlider">
+        Minimum confidence: <strong id="confValue">85%</strong>
+      </label>
+      <div id="confSlider"></div>
+      <p class="control-hint">Drag to show only higher-confidence detections.</p>
+    </div>
+
+    <div class="control-block" id="orthoBlock" hidden>
+      <label class="control-label" for="orthoOpacity">
+        Imagery opacity: <strong id="orthoOpacityValue">100%</strong>
+      </label>
+      <div id="orthoOpacity"></div>
+    </div>
+  </section>
+
+  <!-- Loading / status -->
+  <div id="status" class="status" role="status">Loading dashboard&hellip;</div>
+
+  <script>
+    // Surface a friendly message if the SDK CDN is unreachable (e.g. blocked conf. wifi)
+    window.addEventListener("error", function (e) {
+      if (e && e.target && e.target.tagName === "SCRIPT") {
+        var s = document.getElementById("status");
+        if (s) { s.textContent = "Could not load the map library (network?)."; s.classList.add("error"); }
+      }
+    }, true);
+  </script>
+  <script src="https://js.arcgis.com/4.31/"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
