@@ -6,7 +6,7 @@ const CONFIG = {
   detectionsItemId: "69530e45a4334f2994c33369058560e1", // rtu_detections_moncton (Confidence 0–100)
   buildingsItemId:  "331c90a3a3b042f4ba9a454ea9349ac1", // part3_buildings_moncton (CountRTU; null/0 = none)
   evalItemId:       "a5c11039ebf94acb873486277154c985", // eval_moncton (result TP/FP/FN)
-  orthoItemId:      null,                                // set when the .tpkx tile layer is published
+  orthoItemId:      "87a5bf4db71349d48512494f1b9af86f",  // hosted tile layer, Web Mercator, 7.5 cm (LOD 0–21)
 
   confField: "Confidence",
   confMin: 85,
