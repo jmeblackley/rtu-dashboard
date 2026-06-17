@@ -25,6 +25,18 @@
       </header>
 
       <div class="sidebar-scroll">
+        <!-- Find a building -->
+        <section class="sec" id="find">
+          <h2 class="sec-t">Find a building</h2>
+          <div class="search-wrap">
+            <input id="searchInput" type="text" placeholder="Search by address&hellip;" autocomplete="off" spellcheck="false" />
+            <ul id="searchResults" class="search-results" hidden></ul>
+          </div>
+          <select id="highlightSelect" class="hl-select" aria-label="Jump to an example">
+            <option value="">Jump to an example&hellip;</option>
+          </select>
+        </section>
+
         <!-- Metrics -->
         <section class="sec" id="metrics">
           <h2 class="sec-t">Model performance</h2>
@@ -66,17 +78,14 @@
             <li><span class="lg-sw lg-bld"></span>Building footprint</li>
             <li class="lg-ortho" hidden><span class="lg-sw lg-img"></span>Masked ortho (7.5&nbsp;cm)</li>
           </ul>
-          <div class="ramp-wrap">
-            <span class="ramp-t">Units per building</span>
-            <div class="ramp" id="countRamp"></div>
-            <div class="ramp-ax"><span>none</span><span>26+</span></div>
-          </div>
         </section>
       </div>
 
       <footer id="credit">
         <span class="credit-l"></span>
-        <img class="credit-logo" src="./images/LGeo-logo_horizCard_bw.png" alt="Licker Geospatial Consulting" />
+        <a class="credit-link" href="https://lgeo.co" target="_blank" rel="noopener noreferrer" title="Licker Geospatial Consulting">
+          <img class="credit-logo" src="./images/LGeo-logo_horizCard_bw.png" alt="Licker Geospatial Consulting" />
+        </a>
       </footer>
 
       <button id="sidebarToggle" title="Collapse panel" aria-label="Collapse panel">&#8249;</button>

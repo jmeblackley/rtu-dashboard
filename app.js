@@ -21,16 +21,6 @@ const CONFIG = {
 const EMBED = (() => { const p = new URLSearchParams(location.search); return p.has("embed") && p.get("embed") !== "0"; })();
 if (EMBED) document.body.classList.add("embed");
 
-/* count → class (mono-blue ramp; shared by popup badge + legend) */
-const COUNT_CLASSES = [
-  { max: 0,        color: "#555555", text: "#dddddd", label: "none" },
-  { max: 2,        color: "#15405f", text: "#dfeefb", label: "1–2" },
-  { max: 5,        color: "#1f6dab", text: "#ffffff", label: "3–5" },
-  { max: 10,       color: "#2493F2", text: "#ffffff", label: "6–10" },
-  { max: 25,       color: "#67b4f7", text: "#0c2f4a", label: "11–25" },
-  { max: Infinity, color: "#a9d4fb", text: "#0c2f4a", label: "26+" }
-];
-const countClass = (n) => (n == null || n <= 0) ? COUNT_CLASSES[0] : COUNT_CLASSES.find(c => n <= c.max);
 const clean = (v) => (v != null && v !== "" && v !== "..");
 
 require([
@@ -71,7 +61,7 @@ require([
   const detections = new FeatureLayer({
     portalItem: { id: CONFIG.detectionsItemId },
     title: "RTU detections",
-    outFields: [CONFIG.confField],
+    outFields: [CONFIG.confField, "source_id"],
     renderer: { type: "simple", symbol: outline([36, 147, 242, 1], 1), label: "RTU detection" }
   });
 
@@ -121,13 +111,17 @@ require([
 
   /* ===================== Custom popup ===================== */
   const infoEl = $("infoPopup"), infoBody = $("infoBody");
-  let anchor = null, hi = null;
+  let anchor = null, hiMain = null, hiRel = null;
 
-  async function highlight(graphic) {
-    if (hi) { hi.remove(); hi = null; }
-    try { const lv = await view.whenLayerView(graphic.layer); hi = lv.highlight(graphic); } catch (e) {}
+  function clearHi() { if (hiMain) { hiMain.remove(); hiMain = null; } if (hiRel) { hiRel.remove(); hiRel = null; } }
+  async function highlightMain(graphic) {
+    try { const lv = await view.whenLayerView(graphic.layer); hiMain = lv.highlight(graphic); } catch (e) {}
   }
-  function hideInfo() { infoEl.hidden = true; anchor = null; if (hi) { hi.remove(); hi = null; } }
+  async function highlightRelated(layer, oids) {
+    if (!oids || !oids.length) return;
+    try { const lv = await view.whenLayerView(layer); hiRel = lv.highlight(oids); } catch (e) {}
+  }
+  function hideInfo() { infoEl.hidden = true; infoEl.style.display = "none"; anchor = null; clearHi(); }
   function positionInfo() {
     if (!anchor || infoEl.hidden) return;
     let sp; try { sp = view.toScreen(anchor); } catch (e) { return; }
@@ -145,14 +139,15 @@ require([
       '<div class="conf-bar"><i style="width:' + w + '%"></i></div></div>';
   }
   function bldHTML(a) {
-    const n = a.CountRTU, cc = countClass(n), none = (n == null || n <= 0);
+    const n = a.CountRTU, none = (n == null || n <= 0);
     const title = clean(a.address) ? String(a.address).split(";")[0].trim() : "Building";
+    const badgeStyle = none ? "background:#444;color:#bbb" : "background:#2493F2;color:#fff";
     const bits = [];
     if (clean(a.type)) bits.push("<b>" + a.type + "</b>");
     if (clean(a.year_built)) bits.push("Built " + a.year_built);
     if (clean(a.sq_ft)) bits.push(a.sq_ft + " ft²");
     return '<div class="ip-head">Building</div><div class="ip-title">' + title + "</div>" +
-      '<div class="ip-body"><span class="count-badge" style="background:' + cc.color + ';color:' + cc.text + '">' +
+      '<div class="ip-body"><span class="count-badge" style="' + badgeStyle + '">' +
       (none ? "None" : n + " <small>units</small>") + "</span>" +
       '<div class="ip-sub">' + (none ? "no rooftop units detected" : "rooftop units detected") + "</div>" +
       (bits.length ? '<div class="ip-meta">' + bits.join(" &middot; ") + "</div>" : "") + "</div>";
@@ -174,15 +169,32 @@ require([
     return null;
   }
   function showInfo(g, mapPoint) {
+    clearHi();
     const a = g.attributes;
     infoBody.innerHTML = g.layer === detections ? rtuHTML(a) : g.layer === buildings ? bldHTML(a) : evalHTML(a);
     anchor = mapPoint || (g.geometry && (g.geometry.centroid || (g.geometry.extent && g.geometry.extent.center))) || null;
-    highlight(g);
     infoEl.hidden = false;
     positionInfo();
+    highlightMain(g);
+    // cross-link via source_id: building ↔ its RTUs
+    const sid = a.source_id;
+    if (sid) {
+      if (g.layer === buildings) {
+        detections.queryObjectIds({ where: "source_id = '" + sid + "'" }).then(ids => highlightRelated(detections, ids)).catch(() => {});
+      } else if (g.layer === detections) {
+        buildings.queryObjectIds({ where: "source_id = '" + sid + "'" }).then(ids => highlightRelated(buildings, ids)).catch(() => {});
+      }
+    }
+  }
+
+  async function frameAndShow(f) {
+    const g = f.geometry;
+    try { await view.goTo({ target: g.extent ? g.extent.expand(2.2) : g, zoom: 19 }, { animate: true }); } catch (e) {}
+    showInfo(f, g.extent ? g.extent.center : (g.centroid || g));
   }
 
   view.on("click", async (event) => {
+    const sr = $("searchResults"); if (sr) sr.hidden = true;
     let ht; try { ht = await view.hitTest(event, { include: hitLayers }); } catch (e) { return; }
     const g = topGraphic(ht.results);
     if (!g) return hideInfo();
@@ -223,20 +235,74 @@ require([
   /* confidence filter */
   const confValEl = $("confVal"), confCountEl = $("confCount");
   const confSlider = new Slider({ container: "confSlider", min: CONFIG.confMin, max: CONFIG.confMax, values: [CONFIG.confMin], steps: 0.5, snapOnClickEnabled: true, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
+  const mDetEl = $("m-det"), mWithEl = $("m-withrtu");
   function setConf(v, doCount) {
     v = Math.round(v * 10) / 10;
     confValEl.textContent = v + "%";
-    detections.definitionExpression = CONFIG.confField + " >= " + v;
-    if (doCount) detections.queryFeatureCount({ where: detections.definitionExpression })
-      .then(n => { confCountEl.textContent = "Showing " + n.toLocaleString() + " of " + CONFIG.totalDetections.toLocaleString() + " detections."; }).catch(() => {});
+    const where = CONFIG.confField + " >= " + v;
+    detections.definitionExpression = where;
+    if (!doCount) return;
+    detections.queryFeatureCount({ where }).then(n => {
+      confCountEl.textContent = "Showing " + n.toLocaleString() + " of " + CONFIG.totalDetections.toLocaleString() + " detections.";
+      if (mDetEl) mDetEl.textContent = n.toLocaleString();
+    }).catch(() => {});
+    detections.queryFeatures({ where: where + " AND source_id IS NOT NULL", returnDistinctValues: true, outFields: ["source_id"], returnGeometry: false })
+      .then(r => { if (mWithEl) mWithEl.textContent = r.features.length.toLocaleString(); }).catch(() => {});
   }
   confSlider.on("thumb-drag", e => setConf(e.value, e.state === "stop"));
   confSlider.on("thumb-change", e => setConf(e.value, true));
   setConf(CONFIG.confMin, true);
 
-  /* count ramp legend */
-  const rampEl = $("countRamp");
-  COUNT_CLASSES.forEach(c => { const s = document.createElement("div"); s.className = "seg"; s.style.background = c.color; s.title = c.label; rampEl.appendChild(s); });
+  /* find a building — address search */
+  const searchInput = $("searchInput"), searchResults = $("searchResults");
+  const bldLabel = (a) => clean(a.address) ? String(a.address).split(";")[0].trim() : "Building";
+  let searchTimer = null;
+  async function runSearch(term) {
+    const safe = term.replace(/'/g, "''");
+    try {
+      const r = await buildings.queryFeatures({
+        where: "address LIKE '%" + safe + "%'",
+        outFields: ["address", "source_id", "CountRTU"], returnGeometry: true,
+        outSpatialReference: view.spatialReference, num: 8, orderByFields: ["CountRTU DESC"]
+      });
+      searchResults.innerHTML = "";
+      if (!r.features.length) { searchResults.innerHTML = '<li class="empty">No match</li>'; searchResults.hidden = false; return; }
+      r.features.forEach((f) => {
+        const a = f.attributes, li = document.createElement("li");
+        li.innerHTML = '<span class="r-addr">' + bldLabel(a) + '</span><span class="r-cnt">' + (a.CountRTU || 0) + "</span>";
+        li.addEventListener("click", () => {
+          searchResults.hidden = true; searchInput.value = bldLabel(a);
+          f.layer = buildings; f.sourceLayer = buildings; frameAndShow(f);
+        });
+        searchResults.appendChild(li);
+      });
+      searchResults.hidden = false;
+    } catch (e) {}
+  }
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    const term = searchInput.value.trim();
+    if (term.length < 3) { searchResults.hidden = true; return; }
+    searchTimer = setTimeout(() => runSearch(term), 250);
+  });
+  document.addEventListener("click", (e) => { if (!e.target.closest("#find")) searchResults.hidden = true; });
+
+  /* find a building — jump-to-example picker (top buildings by RTU count) */
+  const hlSelect = $("highlightSelect"), hlFeats = {};
+  buildings.queryFeatures({
+    where: "CountRTU >= 5", outFields: ["address", "source_id", "CountRTU"], returnGeometry: true,
+    outSpatialReference: view.spatialReference, num: 8, orderByFields: ["CountRTU DESC"]
+  }).then((r) => {
+    r.features.forEach((f, i) => {
+      const a = f.attributes, key = (a.source_id || "f") + "_" + i, opt = document.createElement("option");
+      opt.value = key; opt.textContent = bldLabel(a) + " — " + a.CountRTU + " units";
+      hlFeats[key] = f; hlSelect.appendChild(opt);
+    });
+  }).catch(() => {});
+  hlSelect.addEventListener("change", () => {
+    const f = hlFeats[hlSelect.value];
+    if (f) { f.layer = buildings; f.sourceLayer = buildings; frameAndShow(f); }
+  });
 
   /* sidebar collapse */
   $("sidebarToggle").addEventListener("click", () => $("app").classList.toggle("collapsed"));
