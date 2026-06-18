@@ -117,7 +117,7 @@ require([
   view.ui.components = ["attribution"];
   view.ui.add(new Zoom({ view }), "top-right");
   view.ui.add(new Home({ view }), "top-right");
-  view.ui.add(new Fullscreen({ view }), "top-right");
+  view.ui.add(new Fullscreen({ view, element: document.body }), "top-right");
   view.ui.add(new ScaleBar({ view, unit: "metric" }), "bottom-right");
 
   /* ===================== Custom popup ===================== */

@@ -232,8 +232,14 @@ body.embed #metrics .sec-note { display: none; }
 @media (max-width: 760px) {
   :root { --sidebar-w: 100vw; }
   #app { flex-direction: column; }
-  #sidebar { width: 100%; flex-basis: auto; max-height: 48%; border-right: none; border-bottom: 1px solid var(--line); }
-  #app.collapsed #sidebar { margin-left: 0; margin-top: -48vh; }
+  #sidebar { width: 100%; flex-basis: auto; max-height: 52%; border-right: none; border-bottom: 1px solid var(--line); }
+  #app.collapsed #sidebar { margin-left: 0; margin-top: -52vh; }
   #sidebarToggle { top: auto; bottom: -1px; right: 14px; height: 24px; width: 44px; border: 1px solid var(--line); }
   #app.collapsed #sidebarToggle { transform: rotate(-90deg); }
+  /* compact chrome so controls aren't crowded out on small screens */
+  #brand { padding: 11px 14px 10px; }
+  .brand-logo { height: 26px; }
+  #credit { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 9px 14px; }
+  .credit-l { font-size: 10px; }
+  .credit-logo { height: 30px; }
 }
