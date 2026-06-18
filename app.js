@@ -325,6 +325,8 @@ require([
   };
   const themeBtn = $("themeToggle");
   function setThemeUI(light) {
+    const themeLink = document.getElementById("esriTheme");
+    if (themeLink) themeLink.href = "https://js.arcgis.com/4.31/esri/themes/" + (light ? "light" : "dark") + "/main.css";
     const rImg = document.querySelector(".brand-logo"); if (rImg) rImg.src = LOGOS.recover[light ? "light" : "dark"];
     const lImg = document.querySelector(".credit-logo"); if (lImg) lImg.src = LOGOS.lgeo[light ? "light" : "dark"];
     if (themeBtn) {
