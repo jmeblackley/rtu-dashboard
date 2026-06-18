@@ -38,44 +38,15 @@
           </select>
         </section>
 
-        <!-- Metrics -->
-        <section class="sec" id="metrics">
-          <h2 class="sec-t">Model performance</h2>
-          <div class="stat-row">
-            <div class="stat"><span class="stat-v" id="m-recall">89.4<i>%</i></span><span class="stat-l">recall</span></div>
-            <div class="stat"><span class="stat-v" id="m-precision">89.7<i>%</i></span><span class="stat-l">precision</span></div>
-          </div>
-          <div class="chips">
-            <span class="chip"><b id="m-det">2,955</b> RTUs</span>
-            <span class="chip"><b id="m-bld">1,958</b> buildings</span>
-            <span class="chip"><b id="m-withrtu">677</b> with units</span>
-          </div>
-          <p class="sec-note">Validated on 508 labelled buildings (IoU&nbsp;&ge;&nbsp;0.5): <b>2,160</b> correct &middot; <b>248</b> false&nbsp;positive &middot; <b>255</b> missed. <button type="button" class="link-btn" id="moreInfo">More&nbsp;info</button></p>
-        </section>
-
-        <!-- Layers -->
+        <!-- Layers (each toggle carries its own nested control) -->
         <section class="sec" id="layers">
           <h2 class="sec-t">Layers</h2>
           <div id="layerToggles"></div>
         </section>
 
-        <!-- Confidence -->
-        <section class="sec" id="confidence">
-          <h2 class="sec-t">Confidence filter</h2>
-          <label class="ctrl-l">At or above <span class="ctrl-v" id="confVal">85%</span></label>
-          <div id="confSlider"></div>
-          <p class="sec-note" id="confCount">Showing all 2,955 detections.</p>
-        </section>
-
-        <!-- Legend -->
-        <section class="sec" id="legendSection">
-          <h2 class="sec-t">Legend</h2>
-          <ul class="legend">
-            <li><span class="lg-sw lg-rtu"></span>RTU detection</li>
-            <li><span class="lg-sw lg-bld"></span>Building footprint</li>
-            <li class="lg-ortho" hidden><span class="lg-sw lg-img"></span>Masked ortho (7.5&nbsp;cm)</li>
-          </ul>
-        </section>
+        <button type="button" class="info-link" id="moreInfo">
+          <span>About this map &amp; model performance</span><span class="info-arrow" aria-hidden="true">&rarr;</span>
+        </button>
       </div>
 
       <footer id="credit">
@@ -107,23 +78,61 @@
       <button class="dialog-close" id="dialogClose" aria-label="Close">&times;</button>
       <span class="dialog-badge">Draft &middot; V1</span>
       <h2 id="dlgTitle" class="dialog-title">About this dashboard</h2>
+      <p class="dialog-lede">Automated detection of rooftop HVAC units over Moncton, New Brunswick, from 7.5&nbsp;cm aerial imagery.</p>
       <div class="dialog-body">
-        <p>Automated detection of rooftop HVAC units (RTUs) over Moncton, New Brunswick, from 7.5&nbsp;cm aerial imagery (GeoNB, 2024).</p>
+        <section class="acc" data-key="rtu">
+          <button class="acc-h" type="button" aria-expanded="false">What is an RTU, and why map them?</button>
+          <div class="acc-c" hidden>
+            <p>A <b>rooftop unit (RTU)</b> is a packaged heating, ventilation and air-conditioning system mounted on a building&rsquo;s roof &mdash; the boxy metal units common on commercial and institutional buildings.</p>
+            <p>Knowing where they are and how many exist supports <b>energy-efficiency and electrification planning</b> (e.g. heat-pump retrofits), greenhouse-gas estimation, and building-asset inventories &mdash; work that is otherwise slow and costly to do site by site.</p>
+          </div>
+        </section>
 
-        <h3>Which buildings are included</h3>
-        <p>Analysis covers <b>&ldquo;Part&nbsp;3&rdquo; buildings</b> &mdash; footprints larger than <b>600&nbsp;m&sup2;</b> (the larger commercial and institutional roofs where RTUs are expected). Smaller buildings aren&rsquo;t analysed, so they don&rsquo;t appear on the map or in search.</p>
+        <section class="acc" data-key="buildings">
+          <button class="acc-h" type="button" aria-expanded="false">Which buildings are included</button>
+          <div class="acc-c" hidden>
+            <p>Analysis covers <b>&ldquo;Part&nbsp;3&rdquo; buildings</b> &mdash; footprints larger than <b>600&nbsp;m&sup2;</b> (the larger commercial and institutional roofs where RTUs are expected). Smaller buildings aren&rsquo;t analysed, so they don&rsquo;t appear on the map or in search.</p>
+          </div>
+        </section>
 
-        <h3>Addresses &amp; search</h3>
-        <p>Addresses come from the building-footprint dataset&rsquo;s attributes. Search only covers the analysed Part&nbsp;3 buildings, and not every footprint carries a complete address &mdash; so a valid street address can return nothing if its building falls outside this set or is unlabelled. Try a nearby larger building, or pan the map and click a footprint directly.</p>
+        <section class="acc" data-key="addresses">
+          <button class="acc-h" type="button" aria-expanded="false">Addresses &amp; search</button>
+          <div class="acc-c" hidden>
+            <p>Addresses come from the building-footprint dataset&rsquo;s attributes. Search only covers the analysed Part&nbsp;3 buildings, and not every footprint carries a complete address &mdash; so a valid street address can return nothing if its building falls outside this set or is unlabelled. Try a nearby larger building, or pan the map and click a footprint directly.</p>
+          </div>
+        </section>
 
-        <h3>How detections are made</h3>
-        <p>A deep-learning object-detection model draws a bounding box around each likely RTU and reports a <b>confidence</b> score (85&ndash;100%). Use the confidence filter to show only higher-confidence detections.</p>
+        <section class="acc" data-key="detections">
+          <button class="acc-h" type="button" aria-expanded="false">How detections are made</button>
+          <div class="acc-c" hidden>
+            <p>A deep-learning object-detection model draws a bounding box around each likely RTU and reports a <b>confidence</b> score (85&ndash;100%). Use the confidence filter under the RTU layer to show only higher-confidence detections.</p>
+          </div>
+        </section>
 
-        <h3>How accuracy was measured</h3>
-        <p>Detections were compared against <b>2,415 hand-labelled RTUs</b> on <b>508 buildings</b> using the PASCAL&nbsp;VOC method (a match requires <b>IoU&nbsp;&ge;&nbsp;0.5</b>). Result: <b>89.4% recall</b> (real RTUs found) and <b>89.7% precision</b> (detections that are correct). The validation layer maps each case as correct (TP), false positive (FP) or missed (FN).</p>
+        <section class="acc" data-key="performance">
+          <button class="acc-h" type="button" aria-expanded="false">Model performance</button>
+          <div class="acc-c" hidden>
+            <p><b>89.4% recall</b> &middot; <b>89.7% precision</b> (IoU&nbsp;&ge;&nbsp;0.5).</p>
+            <p>Validated against <b>2,415 hand-labelled RTUs</b> on <b>508 buildings</b> using the PASCAL&nbsp;VOC method: 2,160 correct, 248 false positives, 255 missed (10.3% false-positive rate). The validation layer maps each case as correct (TP), false positive (FP) or missed (FN).</p>
+            <p>Across all analysed buildings the model detected <b>2,955 RTUs</b> on <b>677 of 1,958</b> buildings.</p>
+          </div>
+        </section>
 
-        <h3>Version</h3>
-        <p>Draft &mdash; New Brunswick V1 model results. Figures and coverage may change in later versions.</p>
+        <section class="acc" data-key="sources">
+          <button class="acc-h" type="button" aria-expanded="false">Data sources</button>
+          <div class="acc-c" hidden>
+            <p class="src"><b>Imagery</b><span>GeoNB 2024 orthophotos, 7.5&nbsp;cm resolution.</span></p>
+            <p class="src"><b>Building footprints</b><span>Open Database of Buildings (ODB) &mdash; Statistics Canada (federal).</span></p>
+            <p class="src"><b>Detection model</b><span>Licker Geospatial Consulting &mdash; deep-learning object detection.</span></p>
+          </div>
+        </section>
+
+        <section class="acc" data-key="version">
+          <button class="acc-h" type="button" aria-expanded="false">Version</button>
+          <div class="acc-c" hidden>
+            <p>Draft &mdash; New Brunswick V1 model results. Figures and coverage may change in later versions.</p>
+          </div>
+        </section>
       </div>
     </div>
   </div>

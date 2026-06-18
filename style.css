@@ -108,6 +108,12 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); overf
 .toggle .sw { width: 22px; height: 12px; flex: 0 0 22px; }
 .toggle .tg-label { color: var(--ink); }
 .toggle.is-off .tg-label { color: var(--ink-soft); }
+.tg-count { color: var(--ink-soft); font-weight: 400; }
+
+/* About link (opens info dialog) */
+.info-link { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; background: none; border: none; border-bottom: 1px solid var(--line); padding: 14px 18px; font: inherit; font-size: 13px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.info-link:hover { background: var(--bg-2); color: var(--accent-ink); }
+.info-arrow { color: var(--accent-ink); font-size: 15px; }
 
 .ctrl { margin-top: 13px; }
 .ctrl-l { display: block; font-size: 12.5px; color: var(--ink); margin-bottom: 8px; }
@@ -202,9 +208,19 @@ a:focus-visible, #themeToggle:focus-visible, #sidebarToggle:focus-visible, #info
 .dialog-close:hover { color: var(--ink); }
 .dialog-badge { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #fff; background: var(--accent); padding: 2px 9px; }
 .dialog-title { margin: 9px 0 2px; font-size: 19px; font-weight: 700; color: var(--ink); }
-.dialog-body h3 { margin: 16px 0 5px; font-size: 13px; font-weight: 700; color: var(--accent-ink); }
-.dialog-body p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
-.dialog-body p b { color: var(--ink); font-weight: 600; }
+.dialog-lede { margin: 6px 0 8px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.acc { border-top: 1px solid var(--line); }
+.acc-h { width: 100%; text-align: left; background: none; border: none; padding: 11px 26px 11px 0; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--ink); cursor: pointer; position: relative; }
+.acc-h::after { content: "+"; position: absolute; right: 2px; top: 50%; transform: translateY(-50%); font-size: 17px; font-weight: 400; color: var(--ink-soft); }
+.acc-h.open::after { content: "\2212"; }
+.acc-h:hover { color: var(--accent-ink); }
+.acc-c { padding: 0 0 12px; }
+.acc-c[hidden] { display: none; }
+.acc-c p { margin: 0 0 8px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+.acc-c p:last-child { margin-bottom: 0; }
+.acc-c p b { color: var(--ink); font-weight: 600; }
+.src { display: flex; flex-direction: column; gap: 1px; }
+.src b { font-size: 12px; }
 .link-btn, .link-inline { background: none; border: none; padding: 0; margin: 0; font: inherit; color: var(--accent-ink); cursor: pointer; text-decoration: underline; }
 .link-btn:hover, .link-inline:hover { color: var(--accent); }
 

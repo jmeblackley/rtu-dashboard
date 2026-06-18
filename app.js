@@ -219,7 +219,7 @@ require([
   /* layer toggles, each with an optional nested sub-control */
   const togglesEl = $("layerToggles");
   [
-    { layer: detections, label: "RTU detections", sw: 'border:2px solid #2493F2' },
+    { layer: detections, label: 'RTU detections <span class="tg-count" id="rtuCount">&middot;&nbsp;2,955</span>', sw: 'border:2px solid #2493F2', kind: "rtu" },
     evalLayer ? { layer: evalLayer, label: "Model validation (508 bldgs)", sw: 'border:2px solid #36C46A', kind: "eval" } : null,
     { layer: buildings, label: "Building footprints", sw: 'border:1px solid #9e9e9e' },
     ortho ? { layer: ortho, label: "Masked ortho (7.5 cm)", sw: 'background:linear-gradient(135deg,#6a5f54,#8c7e6c)', kind: "ortho" } : null
@@ -233,7 +233,10 @@ require([
     item.appendChild(row);
 
     let sub = null;
-    if (d.kind === "eval") {
+    if (d.kind === "rtu") {
+      sub = document.createElement("div"); sub.className = "toggle-sub";
+      sub.innerHTML = '<label class="ctrl-l">Confidence at or above <span class="ctrl-v" id="confVal">85%</span></label><div id="confSlider"></div>';
+    } else if (d.kind === "eval") {
       sub = document.createElement("div"); sub.className = "toggle-sub";
       sub.innerHTML =
         '<span class="elg"><span class="elg-sw" style="border-color:#36C46A"></span>Correct (TP)</span>' +
@@ -256,7 +259,6 @@ require([
 
   /* ortho opacity slider — lives in the nested control under the imagery toggle */
   if (ortho) {
-    document.querySelector(".lg-ortho").hidden = false;
     const valEl = $("orthoOpacityVal");
     const op = new Slider({ container: "orthoOpacity", min: 0, max: 100, values: [50], steps: 5, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
     const apply = v => { ortho.opacity = v / 100; if (valEl) valEl.textContent = Math.round(v) + "%"; };
@@ -264,22 +266,18 @@ require([
     apply(op.values[0]);
   }
 
-  /* confidence filter */
-  const confValEl = $("confVal"), confCountEl = $("confCount");
+  /* confidence filter (nested under the RTU layer); live count shows in the layer name */
+  const confValEl = $("confVal"), rtuCountEl = $("rtuCount");
   const confSlider = new Slider({ container: "confSlider", min: CONFIG.confMin, max: CONFIG.confMax, values: [CONFIG.confMin], steps: 0.5, snapOnClickEnabled: true, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
-  const mDetEl = $("m-det"), mWithEl = $("m-withrtu");
   function setConf(v, doCount) {
     v = Math.round(v * 10) / 10;
-    confValEl.textContent = v + "%";
+    if (confValEl) confValEl.textContent = v + "%";
     const where = CONFIG.confField + " >= " + v;
     detections.definitionExpression = where;
     if (!doCount) return;
     detections.queryFeatureCount({ where }).then(n => {
-      confCountEl.textContent = "Showing " + n.toLocaleString() + " of " + CONFIG.totalDetections.toLocaleString() + " detections.";
-      if (mDetEl) mDetEl.textContent = n.toLocaleString();
+      if (rtuCountEl) rtuCountEl.innerHTML = "&middot;&nbsp;" + n.toLocaleString();
     }).catch(() => {});
-    detections.queryFeatures({ where: where + " AND source_id IS NOT NULL", returnDistinctValues: true, outFields: ["source_id"], returnGeometry: false })
-      .then(r => { if (mWithEl) mWithEl.textContent = r.features.length.toLocaleString(); }).catch(() => {});
   }
   confSlider.on("thumb-drag", e => setConf(e.value, e.state === "stop"));
   confSlider.on("thumb-change", e => setConf(e.value, true));
@@ -302,7 +300,7 @@ require([
         searchResults.innerHTML = '<li class="empty">No match &mdash; <button type="button" class="link-inline" id="cantFind">Can&rsquo;t find an address?</button></li>';
         searchResults.hidden = false;
         const cf = document.getElementById("cantFind");
-        if (cf) cf.addEventListener("click", (e) => { e.stopPropagation(); openInfo(); });
+        if (cf) cf.addEventListener("click", (e) => { e.stopPropagation(); openInfo("addresses"); });
         return;
       }
       r.features.forEach((f) => {
@@ -372,10 +370,25 @@ require([
   setThemeUI(LIGHT);
   if (themeBtn) themeBtn.addEventListener("click", () => applyTheme(!document.body.classList.contains("light")));
 
-  /* info dialog (hoisted so the search "Can't find an address?" link can call it) */
-  function openInfo() { const d = $("infoDialog"); if (d) d.hidden = false; }
+  /* info dialog + accordion (openInfo hoisted so the search link can call it) */
+  function setAcc(sec, open) {
+    if (!sec) return;
+    sec.querySelector(".acc-c").hidden = !open;
+    const h = sec.querySelector(".acc-h");
+    h.classList.toggle("open", open);
+    h.setAttribute("aria-expanded", String(open));
+  }
+  function openInfo(key) {
+    const d = $("infoDialog"); if (!d) return;
+    d.querySelectorAll(".acc").forEach((sec) => setAcc(sec, false)); // all closed by default
+    if (key) setAcc(d.querySelector('.acc[data-key="' + key + '"]'), true);
+    d.hidden = false;
+  }
   function closeInfo() { const d = $("infoDialog"); if (d) d.hidden = true; }
-  if ($("moreInfo")) $("moreInfo").addEventListener("click", openInfo);
+  document.querySelectorAll("#infoDialog .acc-h").forEach((h) => {
+    h.addEventListener("click", () => setAcc(h.parentElement, h.parentElement.querySelector(".acc-c").hidden));
+  });
+  if ($("moreInfo")) $("moreInfo").addEventListener("click", () => openInfo());
   if ($("dialogClose")) $("dialogClose").addEventListener("click", closeInfo);
   if ($("dialogBackdrop")) $("dialogBackdrop").addEventListener("click", closeInfo);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInfo(); });
