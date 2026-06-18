@@ -3,7 +3,7 @@
  */
 
 const CONFIG = {
-  detectionsItemId: "69530e45a4334f2994c33369058560e1", // rtu_detections_moncton (Confidence 0–100) 
+  detectionsItemId: "69530e45a4334f2994c33369058560e1", // rtu_detections_moncton (Confidence 0–100)
   buildingsItemId:  "331c90a3a3b042f4ba9a454ea9349ac1", // part3_buildings_moncton (CountRTU; null/0 = none)
   evalItemId:       "a5c11039ebf94acb873486277154c985", // eval_moncton (result TP/FP/FN)
   orthoItemId:      "87a5bf4db71349d48512494f1b9af86f",  // hosted tile layer, Web Mercator, 7.5 cm (LOD 0–21)
@@ -84,7 +84,7 @@ require([
   }
 
   let ortho = null;
-  if (CONFIG.orthoItemId) ortho = new TileLayer({ portalItem: { id: CONFIG.orthoItemId }, title: "Masked ortho (7.5 cm)" });
+  if (CONFIG.orthoItemId) ortho = new TileLayer({ portalItem: { id: CONFIG.orthoItemId }, title: "Masked ortho (7.5 cm)", opacity: 0.5 });
 
   const layers = [];
   if (ortho) layers.push(ortho);
@@ -227,9 +227,10 @@ require([
     $("orthoControl").hidden = false;
     document.querySelector(".lg-ortho").hidden = false;
     const valEl = $("orthoOpacityVal");
-    const op = new Slider({ container: "orthoOpacity", min: 0, max: 100, values: [100], steps: 5, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
+    const op = new Slider({ container: "orthoOpacity", min: 0, max: 100, values: [50], steps: 5, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
     const apply = v => { ortho.opacity = v / 100; valEl.textContent = Math.round(v) + "%"; };
     op.on(["thumb-drag", "thumb-change"], e => apply(e.value != null ? e.value : op.values[0]));
+    apply(op.values[0]);
   }
 
   /* confidence filter */
