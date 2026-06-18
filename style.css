@@ -95,7 +95,11 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); overf
 
 /* layer toggles */
 .toggle { display: flex; align-items: center; gap: 9px; padding: 8px 0; cursor: pointer; user-select: none; font-size: 13px; }
-.toggle + .toggle { border-top: 1px solid var(--line); }
+.layer-item + .layer-item { border-top: 1px solid var(--line); }
+.toggle-sub { padding: 4px 0 9px 26px; }
+.toggle-sub[hidden] { display: none; }
+.elg { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--ink-soft); padding: 3px 0; }
+.elg-sw { width: 22px; height: 11px; flex: 0 0 22px; border: 2px solid; background: transparent; }
 .toggle input { position: absolute; opacity: 0; pointer-events: none; }
 .toggle .box { width: 15px; height: 15px; flex: 0 0 15px; border: 1px solid var(--line-2); display: inline-flex; align-items: center; justify-content: center; }
 .toggle input:checked + .box { background: var(--accent); border-color: var(--accent); }
@@ -188,6 +192,21 @@ a:focus-visible, #themeToggle:focus-visible, #sidebarToggle:focus-visible, #info
 .esri-slider__anchor:focus .esri-slider__thumb { box-shadow: 0 0 0 3px var(--focus) !important; }
 .esri-slider__label, .esri-slider__max, .esri-slider__min { font-size: 11px; color: var(--ink-soft); }
 .esri-attribution { font-family: var(--font); }
+
+/* ===== Info dialog ===== */
+.dialog { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; }
+.dialog[hidden] { display: none; }
+.dialog-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.55); }
+.dialog-card { position: relative; width: min(520px, calc(100vw - 40px)); max-height: 82vh; overflow-y: auto; background: var(--bg); color: var(--ink); border: 1px solid var(--line-2); border-top: 3px solid var(--accent); padding: 20px 24px 24px; }
+.dialog-close { position: absolute; top: 9px; right: 12px; background: none; border: none; color: var(--ink-soft); font-size: 24px; line-height: 1; cursor: pointer; }
+.dialog-close:hover { color: var(--ink); }
+.dialog-badge { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #fff; background: var(--accent); padding: 2px 9px; }
+.dialog-title { margin: 9px 0 2px; font-size: 19px; font-weight: 700; color: var(--ink); }
+.dialog-body h3 { margin: 16px 0 5px; font-size: 13px; font-weight: 700; color: var(--accent-ink); }
+.dialog-body p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+.dialog-body p b { color: var(--ink); font-weight: 600; }
+.link-btn, .link-inline { background: none; border: none; padding: 0; margin: 0; font: inherit; color: var(--accent-ink); cursor: pointer; text-decoration: underline; }
+.link-btn:hover, .link-inline:hover { color: var(--accent); }
 
 /* ===== Embed mode ===== */
 body.embed #brand, body.embed #credit { display: none; }

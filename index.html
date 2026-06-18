@@ -50,17 +50,13 @@
             <span class="chip"><b id="m-bld">1,958</b> buildings</span>
             <span class="chip"><b id="m-withrtu">677</b> with units</span>
           </div>
-          <p class="sec-note">Validated on 508 labelled buildings (IoU&nbsp;&ge;&nbsp;0.5): <b>2,160</b> correct &middot; <b>248</b> false&nbsp;positive &middot; <b>255</b> missed.</p>
+          <p class="sec-note">Validated on 508 labelled buildings (IoU&nbsp;&ge;&nbsp;0.5): <b>2,160</b> correct &middot; <b>248</b> false&nbsp;positive &middot; <b>255</b> missed. <button type="button" class="link-btn" id="moreInfo">More&nbsp;info</button></p>
         </section>
 
         <!-- Layers -->
         <section class="sec" id="layers">
           <h2 class="sec-t">Layers</h2>
           <div id="layerToggles"></div>
-          <div class="ctrl" id="orthoControl" hidden>
-            <label class="ctrl-l">Imagery opacity <span class="ctrl-v" id="orthoOpacityVal">50%</span></label>
-            <div id="orthoOpacity"></div>
-          </div>
         </section>
 
         <!-- Confidence -->
@@ -102,6 +98,34 @@
         <div id="infoBody"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Info dialog -->
+  <div id="infoDialog" class="dialog" hidden>
+    <div class="dialog-backdrop" id="dialogBackdrop"></div>
+    <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+      <button class="dialog-close" id="dialogClose" aria-label="Close">&times;</button>
+      <span class="dialog-badge">Draft &middot; V1</span>
+      <h2 id="dlgTitle" class="dialog-title">About this dashboard</h2>
+      <div class="dialog-body">
+        <p>Automated detection of rooftop HVAC units (RTUs) over Moncton, New Brunswick, from 7.5&nbsp;cm aerial imagery (GeoNB, 2024).</p>
+
+        <h3>Which buildings are included</h3>
+        <p>Analysis covers <b>&ldquo;Part&nbsp;3&rdquo; buildings</b> &mdash; footprints larger than <b>600&nbsp;m&sup2;</b> (the larger commercial and institutional roofs where RTUs are expected). Smaller buildings aren&rsquo;t analysed, so they don&rsquo;t appear on the map or in search.</p>
+
+        <h3>Addresses &amp; search</h3>
+        <p>Addresses come from the building-footprint dataset&rsquo;s attributes. Search only covers the analysed Part&nbsp;3 buildings, and not every footprint carries a complete address &mdash; so a valid street address can return nothing if its building falls outside this set or is unlabelled. Try a nearby larger building, or pan the map and click a footprint directly.</p>
+
+        <h3>How detections are made</h3>
+        <p>A deep-learning object-detection model draws a bounding box around each likely RTU and reports a <b>confidence</b> score (85&ndash;100%). Use the confidence filter to show only higher-confidence detections.</p>
+
+        <h3>How accuracy was measured</h3>
+        <p>Detections were compared against <b>2,415 hand-labelled RTUs</b> on <b>508 buildings</b> using the PASCAL&nbsp;VOC method (a match requires <b>IoU&nbsp;&ge;&nbsp;0.5</b>). Result: <b>89.4% recall</b> (real RTUs found) and <b>89.7% precision</b> (detections that are correct). The validation layer maps each case as correct (TP), false positive (FP) or missed (FN).</p>
+
+        <h3>Version</h3>
+        <p>Draft &mdash; New Brunswick V1 model results. Figures and coverage may change in later versions.</p>
+      </div>
+    </div>
   </div>
 
   <div id="status" class="status" role="status">Loading dashboard&hellip;</div>

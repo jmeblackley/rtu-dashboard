@@ -216,30 +216,50 @@ require([
   view.on("resize", positionInfo);
 
   /* ===================== Sidebar controls ===================== */
-  /* layer toggles */
+  /* layer toggles, each with an optional nested sub-control */
   const togglesEl = $("layerToggles");
   [
-    { layer: detections, label: "RTU detections", sw: 'border:1.5px solid #2493F2' },
-    evalLayer ? { layer: evalLayer, label: "Model validation (508 bldgs)", sw: 'border:1.5px solid #36C46A' } : null,
+    { layer: detections, label: "RTU detections", sw: 'border:2px solid #2493F2' },
+    evalLayer ? { layer: evalLayer, label: "Model validation (508 bldgs)", sw: 'border:2px solid #36C46A', kind: "eval" } : null,
     { layer: buildings, label: "Building footprints", sw: 'border:1px solid #9e9e9e' },
-    ortho ? { layer: ortho, label: "Masked ortho (7.5 cm)", sw: 'background:linear-gradient(135deg,#5a5048,#7a6e5e)' } : null
+    ortho ? { layer: ortho, label: "Masked ortho (7.5 cm)", sw: 'background:linear-gradient(135deg,#6a5f54,#8c7e6c)', kind: "ortho" } : null
   ].filter(Boolean).forEach((d) => {
+    const item = document.createElement("div");
+    item.className = "layer-item";
     const row = document.createElement("label");
     row.className = "toggle" + (d.layer.visible ? "" : " is-off");
     row.innerHTML = '<input type="checkbox"' + (d.layer.visible ? " checked" : "") + '><span class="box"></span>' +
       '<span class="sw" style="' + d.sw + '"></span><span class="tg-label">' + d.label + "</span>";
+    item.appendChild(row);
+
+    let sub = null;
+    if (d.kind === "eval") {
+      sub = document.createElement("div"); sub.className = "toggle-sub";
+      sub.innerHTML =
+        '<span class="elg"><span class="elg-sw" style="border-color:#36C46A"></span>Correct (TP)</span>' +
+        '<span class="elg"><span class="elg-sw" style="border-color:#FF5B6E"></span>False positive (FP)</span>' +
+        '<span class="elg"><span class="elg-sw" style="border-color:#FFB13C"></span>Missed (FN)</span>';
+    } else if (d.kind === "ortho") {
+      sub = document.createElement("div"); sub.className = "toggle-sub";
+      sub.innerHTML = '<label class="ctrl-l">Opacity <span class="ctrl-v" id="orthoOpacityVal">50%</span></label><div id="orthoOpacity"></div>';
+    }
+    if (sub) { sub.hidden = !d.layer.visible; item.appendChild(sub); }
+
     const cb = row.querySelector("input");
-    cb.addEventListener("change", () => { d.layer.visible = cb.checked; row.classList.toggle("is-off", !cb.checked); });
-    togglesEl.appendChild(row);
+    cb.addEventListener("change", () => {
+      d.layer.visible = cb.checked;
+      row.classList.toggle("is-off", !cb.checked);
+      if (sub) sub.hidden = !cb.checked;
+    });
+    togglesEl.appendChild(item);
   });
 
-  /* ortho opacity */
+  /* ortho opacity slider — lives in the nested control under the imagery toggle */
   if (ortho) {
-    $("orthoControl").hidden = false;
     document.querySelector(".lg-ortho").hidden = false;
     const valEl = $("orthoOpacityVal");
     const op = new Slider({ container: "orthoOpacity", min: 0, max: 100, values: [50], steps: 5, visibleElements: { labels: false, rangeLabels: true }, labelFormatFunction: v => v + "%" });
-    const apply = v => { ortho.opacity = v / 100; valEl.textContent = Math.round(v) + "%"; };
+    const apply = v => { ortho.opacity = v / 100; if (valEl) valEl.textContent = Math.round(v) + "%"; };
     op.on(["thumb-drag", "thumb-change"], e => apply(e.value != null ? e.value : op.values[0]));
     apply(op.values[0]);
   }
@@ -278,7 +298,13 @@ require([
         outSpatialReference: view.spatialReference, num: 8, orderByFields: ["CountRTU DESC"]
       });
       searchResults.innerHTML = "";
-      if (!r.features.length) { searchResults.innerHTML = '<li class="empty">No match</li>'; searchResults.hidden = false; return; }
+      if (!r.features.length) {
+        searchResults.innerHTML = '<li class="empty">No match &mdash; <button type="button" class="link-inline" id="cantFind">Can&rsquo;t find an address?</button></li>';
+        searchResults.hidden = false;
+        const cf = document.getElementById("cantFind");
+        if (cf) cf.addEventListener("click", (e) => { e.stopPropagation(); openInfo(); });
+        return;
+      }
       r.features.forEach((f) => {
         const a = f.attributes, li = document.createElement("li");
         li.innerHTML = '<span class="r-addr">' + bldLabel(a) + '</span><span class="r-cnt">' + (a.CountRTU || 0) + "</span>";
@@ -345,6 +371,14 @@ require([
   }
   setThemeUI(LIGHT);
   if (themeBtn) themeBtn.addEventListener("click", () => applyTheme(!document.body.classList.contains("light")));
+
+  /* info dialog (hoisted so the search "Can't find an address?" link can call it) */
+  function openInfo() { const d = $("infoDialog"); if (d) d.hidden = false; }
+  function closeInfo() { const d = $("infoDialog"); if (d) d.hidden = true; }
+  if ($("moreInfo")) $("moreInfo").addEventListener("click", openInfo);
+  if ($("dialogClose")) $("dialogClose").addEventListener("click", closeInfo);
+  if ($("dialogBackdrop")) $("dialogBackdrop").addEventListener("click", closeInfo);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeInfo(); });
 
   /* sidebar collapse */
   $("sidebarToggle").addEventListener("click", () => $("app").classList.toggle("collapsed"));
