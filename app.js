@@ -21,6 +21,15 @@ const CONFIG = {
 const EMBED = (() => { const p = new URLSearchParams(location.search); return p.has("embed") && p.get("embed") !== "0"; })();
 if (EMBED) document.body.classList.add("embed");
 
+/* theme: ?theme=light|dark wins (for embeds), else remembered choice, else dark */
+const LIGHT = (() => {
+  const t = new URLSearchParams(location.search).get("theme");
+  if (t === "light") return true;
+  if (t === "dark") return false;
+  try { return localStorage.getItem("rtuTheme") === "light"; } catch (e) { return false; }
+})();
+if (LIGHT) document.body.classList.add("light");
+
 const clean = (v) => (v != null && v !== "" && v !== "..");
 
 require([
@@ -39,15 +48,17 @@ require([
   };
   const noFill = [0, 0, 0, 0];
   const outline = (rgba, width) => ({ type: "simple-fill", color: noFill, outline: { color: rgba, width } });
+  /* building outline tuned per theme for contrast */
+  const bldOutline = (light) => ({ type: "simple", symbol: outline(light ? [96, 96, 96, 0.85] : [158, 158, 158, 0.6], light ? 0.6 : 0.55), label: "Building footprint" });
 
-  /* ---- Dark basemap (CARTO dark matter, keyless) ---- */
-  const basemap = new Basemap({
+  /* ---- Basemap (CARTO, keyless) — dark or light per theme ---- */
+  const makeBasemap = (light) => new Basemap({
     baseLayers: [ new WebTileLayer({
-      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/dark_all/{level}/{col}/{row}.png",
+      urlTemplate: "https://{subDomain}.basemaps.cartocdn.com/" + (light ? "light_all" : "dark_all") + "/{level}/{col}/{row}.png",
       subDomains: ["a", "b", "c", "d"],
       copyright: "&copy; OpenStreetMap contributors &copy; CARTO"
     })],
-    title: "Dark Matter"
+    title: light ? "Positron" : "Dark Matter"
   });
 
   /* ---- Layers (thin outlines, no fill) ---- */
@@ -55,7 +66,7 @@ require([
     portalItem: { id: CONFIG.buildingsItemId },
     title: "Building footprints",
     outFields: ["CountRTU", "address", "type", "year_built", "sq_ft", "source_id"],
-    renderer: { type: "simple", symbol: outline([158, 158, 158, 0.55], 0.5), label: "Building footprint" }
+    renderer: bldOutline(LIGHT)
   });
 
   const detections = new FeatureLayer({
@@ -93,7 +104,7 @@ require([
   layers.push(detections); // top of stack
 
   /* ---- Map & view ---- */
-  const map = new Map({ basemap, layers });
+  const map = new Map({ basemap: makeBasemap(LIGHT), layers });
   const view = new MapView({
     container: "viewDiv", map, center: CONFIG.center, zoom: CONFIG.zoom,
     popupEnabled: false,
@@ -304,6 +315,34 @@ require([
     const f = hlFeats[hlSelect.value];
     if (f) { f.layer = buildings; f.sourceLayer = buildings; frameAndShow(f); }
   });
+
+  /* theme toggle (light / dark) — swaps basemap, building contrast, and logos */
+  const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>';
+  const MOON = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>';
+  const LOGOS = {
+    recover: { dark: "./images/Recover-Logo-Horizontal-light.svg", light: "./images/Recover-Logo-Horizontal.svg" },
+    lgeo:    { dark: "./images/LGeo-logo_horizCard_white%20text.png", light: "./images/LGeo-logo_horizCard_bw.png" }
+  };
+  const themeBtn = $("themeToggle");
+  function setThemeUI(light) {
+    const rImg = document.querySelector(".brand-logo"); if (rImg) rImg.src = LOGOS.recover[light ? "light" : "dark"];
+    const lImg = document.querySelector(".credit-logo"); if (lImg) lImg.src = LOGOS.lgeo[light ? "light" : "dark"];
+    if (themeBtn) {
+      themeBtn.innerHTML = light ? MOON : SUN;
+      themeBtn.setAttribute("aria-pressed", String(light));
+      const lbl = light ? "Switch to dark theme" : "Switch to light theme";
+      themeBtn.title = lbl; themeBtn.setAttribute("aria-label", lbl);
+    }
+  }
+  function applyTheme(light) {
+    document.body.classList.toggle("light", light);
+    map.basemap = makeBasemap(light);
+    buildings.renderer = bldOutline(light);
+    setThemeUI(light);
+    try { localStorage.setItem("rtuTheme", light ? "light" : "dark"); } catch (e) {}
+  }
+  setThemeUI(LIGHT);
+  if (themeBtn) themeBtn.addEventListener("click", () => applyTheme(!document.body.classList.contains("light")));
 
   /* sidebar collapse */
   $("sidebarToggle").addEventListener("click", () => $("app").classList.toggle("collapsed"));
