@@ -108,9 +108,9 @@ body { font-family: var(--font); color: var(--ink); background: var(--bg); overf
 .lg-img { background: linear-gradient(135deg, #5a5048, #7a6e5e); }
 
 /* credit footer */
-#credit { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
-.credit-l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft); }
-.credit-logo { height: 38px; width: auto; }
+#credit { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 9px; padding: 15px 18px; border-top: 1px solid var(--line); }
+.credit-l { font-size: 11px; letter-spacing: 0.02em; color: var(--ink-soft); }
+.credit-logo { height: 56px; width: auto; max-width: 100%; }
 #brand a, #credit a { display: inline-flex; line-height: 0; text-decoration: none; }
 #brand a:hover, #credit a:hover { opacity: 0.82; }
 
